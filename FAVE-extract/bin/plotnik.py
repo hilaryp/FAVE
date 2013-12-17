@@ -566,9 +566,20 @@ def is_penultimate_syllable_resyllabified(trans):
 def is_tense(trans, phones):
 
     TENSERS = {'M', 'N', 'S', 'TH', 'F'}
-    NEGATIVE_EXCEPTIONS = {'AM', 'RAN', 'BEGAN', 'SWAM', 'MATH'}
-    POSITIVE_EXCEPTIONS = {'BAD', 'BADLY', 'BADDER', 'BADDEST', 'BADNESS', 'BADMINTON', 'BADMINTONS', 'MAD', 'MADLY', 'MADDEN', 'MADDENING', 'MADDENINGLY', 'MADDER', 'MADNESS', 'GLAD', 'GLADLY', 'GLADDER', 'GLADDEST', 'GLADDEN', 'GLADDENING', 'GLADNESS'}
-    UNCLASSIFIABLE = {'CAN'}
+    NEGATIVE_EXCEPTIONS = {'AM', 'RAN', 'SWAM', 'MATH', 'EXAM', 'ALAS',
+                           'FAMILY', 'FAMILIES', "FAMILY'S", 'CATHOLIC',
+                           'CATHOLICS', 'CAMERA', 'CATHERINE'}
+    POSITIVE_EXCEPTIONS = {'BAD', 'BADLY', 'BADDER', 'BADDEST', 'BADNESS', 
+                           'BADMINTON', 'BADMINTONS', 'MAD', 'MADLY', 'MADDEN',
+                           'MADDENING', 'MADDENINGLY', 'MADDER', 'MADNESS', 
+                           'GLAD', 'GLADLY', 'GLADDER', 'GLADDEST', 'GLADDEN',
+                           'GLADDENING', 'GLADNESS', 'GRANDMOTHER',
+                           'GRANDMOTHERS', "GRANDMOTHER'S", 'GRANDMA', 
+                           'SANTA', 'SANTAS', "SANTA'S", 'BASKET',
+                           'BASKETS', 'BASKETRY', "BASKET'S", 
+                           'BASKETMAKER', 'BASKETMAKING', 'BASKETBALL', 
+                           'BASKETBALLS', "BASKETBALL'S", 'TASKER'}
+    UNCLASSIFIABLE = {'CAN', 'BEGAN', 'ANNE', 'ANNIE'}
 
     ##True iff word `word` with pronuciation `pron` (represented as a list of
     ##ARPABET characters) has a tense short-a in the first syllable in the 
@@ -600,14 +611,23 @@ def is_tense(trans, phones):
         return True
     if trans in NEGATIVE_EXCEPTIONS:
         return False
-    # parse syllables
-    syls = syllabify(phones)
+    # parse syllables, with "Alaska rule" off
+    syls = syllabify(phones, False)
     (onset, nucleus, coda) = syls[0]
     # in my syllable-parsing scheme, 'r' is parsed into the nucleus in 
     # certain contexts; in this case the vowel is lax regardless of the 
     # coda's contents
     if len(nucleus) > 1 and nucleus[1] == 'R':
         return False
+    # code potential "Alaska rule" problems as UNCLASSIFIABLE if they
+    # are not positive or negative exceptions already
+    if len(syls) > 1:
+        # true if there is a following syllable
+        next_onset = syls[1][0]
+        if len(next_onset) > 1:
+            # has at least two sounds in the next onset
+            if next_onset[0] == 'S' and next_onset[1] in {'P', 'T', 'K'}:
+                return None
     # check for tautosyllabic tensing segment at the start of the coda
     if len(coda) > 0:
         if coda[0] in TENSERS:
@@ -624,25 +644,31 @@ def is_tense(trans, phones):
 def phila_system(i, phones, trans, fm, fp, fv, ps, fs, pc, phoneset):
     """redefines vowel classes for Philadelphia"""
 
-    orig_pc = pc  # Plotnik code returned by arpabet2plotnik
-    phones = split_stress_digit(phones)  # separate Arpabet coding from stress digit for vowels
+    orig_pc = pc  
+    # Plotnik code returned by arpabet2plotnik
+    phones = split_stress_digit(phones)  
+    # separate Arpabet coding from stress digit for vowels
 
-    # 1. New short-a coding using Kyle Gorman's syllabification & classification functions above 
-    if pc == '3' and phones[i].label == "AE1" and trans.upper() not in ['AND', "AN'", 'AM', 'AN', 'THAN'] and fm != '0':
-	tenseness = is_tense(trans, [ph.label for ph in phones[i:]])
-    # the second argument is a list of ARPABET phones for the word starting with the target vowel; this will not affect 
-    # correctness of syllabification. is_tense returns True if tense, False if lax, and None if variable/"unclassifiable"
-	if tenseness == True:
-		pc = '33'
-	elif tenseness == False:
-		pc = '3'
-	else:
-		pc = '39'	
+    # 1. New short-a coding using Kyle Gorman's syllabification & 
+    # classification functions above 
+    if pc == '3' and phones[i].label == "AE1" and trans.upper() not in [
+            'AND', "AN'", 'AM', 'AN', 'THAN'] and fm != '0':
+	    tenseness = is_tense(trans, [ph.label for ph in phones[i:]])
+    # the second argument is a list of ARPABET phones for the word starting 
+    # with the target vowel; this will not affect correctness of 
+    # syllabification. is_tense returns True if tense, False if lax, and None 
+    # if variable/"unclassifiable"
+	    if tenseness == True:
+		    pc = '33'
+	    elif tenseness == False:
+		    pc = '3'
+	    else:
+		    pc = '39'	
 
-    # convert dictionary entries to short-a for "-arry" words
+    # convert dictionary entries to LAX short-a for "-arry" words
     if pc == '2' and 'ARRY' in trans.upper():
         if len(phones) > i + 2 and phones[i + 1].arpa == 'R' and phoneset[phones[i + 2].arpa].cvox == '0':
-            pc = '39'
+            pc = '3'
 
     # random dictionary inaccuracies
     if pc == '5' and trans.upper() == 'MARIO':
