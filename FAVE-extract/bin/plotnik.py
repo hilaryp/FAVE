@@ -31,8 +31,8 @@ import re
 from syllabify import syllabify
 from decorators import Memoize
 
-from nltk.stem.snowball import EnglishStemmer
-STEM = Memoize(EnglishStemmer().stem)
+from porter import PorterStemmer
+STEM = Memoize(PorterStemmer().stem)
 
 glide_regex = re.compile('{[a-z0-9]*}')
                          # Plotnik glide coding: '{[f|b|i|m|s|d|br2|g}'
