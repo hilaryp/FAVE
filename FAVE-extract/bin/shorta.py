@@ -148,6 +148,8 @@ def is_tense(word, pron):
     True
     >>> is_tense('CLASSES', pron['CLASSES'])
     True
+    >>> is_tense('ASKING', pron['ASKING'])
+    True
 
     (lexically) Unclassifiable:
     >>> is_tense('CAN', pron['CAN'])
@@ -196,7 +198,9 @@ def is_tense(word, pron):
         if len(syls[0][2]) == 0 and len(next_onset) > 1:
             # coda is empty, onset is complex...may be a target of the Alaska rule
             if next_onset[0] == 'S': 
-                # has at least two sounds in the next onset
+                if is_penultimate_syllable_resyllabified(word):
+                    # apparent instance of Alaska rule actually due to resyllab
+                    return True
                 return None
     # check for tautosyllabic tensing segment at the start of the coda
     if len(coda) > 0:
