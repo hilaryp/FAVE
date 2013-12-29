@@ -39,7 +39,7 @@ def is_penultimate_syllable_resyllabified(word):
     # define the suffix to be the residue
     suffix = word[sp + 1:].upper()
     # check for /-z/, /-iŋ/, or /-iŋ-z/ therein
-    if suffix != '' and suffix.endswith(('S', 'ING', 'INGS')):
+    if suffix and suffix.endswith(('ES', 'ING', 'INGS')):
         return True
     return False
 
@@ -138,9 +138,15 @@ def is_tense(word, pron):
     False
     >>> is_tense('MANAGE', pron['MANAGE'])
     False
+    >>> is_tense('PLANET', pron['PLANET'])
+    False
+    >>> is_tense('PLANETS', pron['PLANETS'])
+    False
 
     Opaque tensing in (re)open(ed) syllables:
     >>> is_tense('MANNING', pron['MANNING'])
+    True
+    >>> is_tense('CLASSES', pron['CLASSES'])
     True
 
     (lexically) Unclassifiable:
