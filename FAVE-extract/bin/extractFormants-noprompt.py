@@ -848,14 +848,22 @@ def getSoundEditor():
 def readPNCdata(speakername, speakernum, fileStem):
     """reads speaker demographics from a csv file"""
     speaker = Speaker()
-    datafile = 'bin/PNC_data.csv'
-    SUBJECT = r'^\w\w\w?\d?\d?-\w?\d?\d?-\d?\d?\w?'
+    datafile = 'bin/demographics.csv'
+    PNCSUBJECT = r'^\D\D\D?\d?\d?-\D?\d?\d?-\d\d?'
+    IHPSUBJECT = r'^\D\D\D\d-\d\d?\d?'
     PNC_dict = {}
 
-    m = match(SUBJECT, path.split(fileStem)[1])
-    if m == None:
-            exit('Malformed argument: "' + fname + '"' + ' regex match failed.')
-    subject = m.group(0)
+    #m = match(SUBJECT, path.split(fileStem)[1])
+    #if m == None:
+    #        exit('Malformed argument: "' + fname + '"' + ' regex match failed.')
+    #subject = m.group(0)
+
+    subject = match(IHPSUBJECT, path.split(fileStem)[1]).group(0)
+    if subject == None:
+            try:
+                subject = match(PNCSUBJECT, path.split(fileStem)[1]).group(0)
+            except AttributeError:
+                exit('Unrecognized filename: "' + fname + '"' + ' regex subject match failed.')
 
     with open(datafile, 'rU') as source:
         for row in DictReader(source):
@@ -881,7 +889,7 @@ def readPNCdata(speakername, speakernum, fileStem):
         else:
             exit("Names " + speaker.name + " and " + speakername + " do not match!!")
     else:
-        exit("Speaker " + subject + " not in PNC_data.csv!")
+        exit("Speaker " + subject + " not in demographics.csv!")
     return speaker
 
 #def getSpeakerBackground(speakername, speakernum, datafile, subject):

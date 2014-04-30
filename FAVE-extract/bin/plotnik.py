@@ -1,26 +1,31 @@
 #
-# !!! This is NOT the original plotnik.py file !!!                  ##
+# !!! This is NOT the original plotnik.py file !!!                           ##
 #
-# Last modified by Ingrid Rosenfelder:  February 10, 2012                            ##
-# - mostly comments (all comment beginning with a double pound sign ("##"))          ##
-# - some closing of file objects                                                     ##
-# - docstrings for all classes and functions                                         ##
-# - changed order of contents:  (alphabetical within categories)                     ##
-# 1. regexes & dictionaries                                                       ##
-# 2. classes                                                                      ##
-# 3. functions                                                                    ##
-# - modified outputPlotnikFile:                                                      ##
-# + style coding (converted to corresponding Plotnik codes)                       ##
-# + [original LPC measurement values (poles and bandwidths) - commented out]      ##
-# + nFormants selected (between slashes)                                          ##
-# - dictionary STYLES (letters vs. Plotnik codes)                                    ##
-# - added ethnicity and location to PltFile object, and changed outputPlotnikFile    ##
-# - added phila_system                                                               ##
-# - changed line endings to '\r' in .plt and .pll output files                       ##
-# - changed "phila_system" to separate option                                        ##
-# - fixed weird alignment case where word ended in "sp" phone                        ##
-# - changed "philaSystem" option to "vowelSystem" with new option "simplifiedARPABET"##
-# - formant "tracks" (5 points throughout the vowel) output in <> in .plt file       ##
+# Last modified by Hilary Prichard: December, 2013
+# - Phila short-a coding has been rewritten to depend on shorta.py module
+# - working on conforming to PEP 8 max line length
+#
+# Last modified by Ingrid Rosenfelder:  February 10, 2012                    ##
+# - mostly comments (all comment beginning with a double pound sign ("##"))  ##
+# - some closing of file objects                                             ##
+# - docstrings for all classes and functions                                 ##
+# - changed order of contents:  (alphabetical within categories)             ##
+# 1. regexes & dictionaries                                                  ##
+# 2. classes                                                                 ##
+# 3. functions                                                               ##
+# - modified outputPlotnikFile:                                              ##
+# + style coding (converted to corresponding Plotnik codes)                  ##
+# + [original LPC measurement values (poles and bandwidths) - commented out] ##
+# + nFormants selected (between slashes)                                     ##
+# - dictionary STYLES (letters vs. Plotnik codes)                            ##
+# - added ethnicity and location to PltFile object, changed outputPlotnikFile##
+# - added phila_system                                                       ##
+# - changed line endings to '\r' in .plt and .pll output files               ##
+# - changed "phila_system" to separate option                                ##
+# - fixed weird alignment case where word ended in "sp" phone                ##
+# - changed "philaSystem" option to "vowelSystem" with new option            ##
+#   "simplifiedARPABET"                                                      ##
+# - formant "tracks" (5 points throughout the vowel) output in <> in .plt    ##
 #
 
 import sys
@@ -31,22 +36,25 @@ import re
 from shorta import is_tense
 
 glide_regex = re.compile('{[a-z0-9]*}')
-                         # Plotnik glide coding: '{[f|b|i|m|s|d|br2|g}'
-style_regex = re.compile('-[0-9]-')  # Plotnik stylistic levels:  '-[1-7]-'
-comment_regex = re.compile('-- .*')  # Plotnik:  beginning of comment
+# Plotnik glide coding: '{[f|b|i|m|s|d|br2|g}'
+style_regex = re.compile('-[0-9]-')  
+# Plotnik stylistic levels:  '-[1-7]-'
+comment_regex = re.compile('-- .*')  
+# Plotnik:  beginning of comment
 count_regex = re.compile('[0-9]$')
-                         # Plotnik:  number at end of token (for multiple
-                         # tokens of same word):  '[0-9]+$'
-stress_regex = re.compile(
-    '[0-2]$')     # Arbabet coding:  primary stress, secondary stress, or unstressed (at end of vowel)
+# Plotnik:  number at end of token (for multiple tokens of same word):  '[0-9]+$'
+stress_regex = re.compile('[0-2]$')   
+# Arbabet coding:  primary stress, secondary stress, or unstressed (at end of vowel)
 
 # "TRANSLATION" DICTIONARIES:
 # Arpabet to Plotnik coding
-A2P = {'AA': '5', 'AE': '3', 'AH': '6', 'AO': '53', 'AW': '42', 'AY': '41', 'EH': '2', 'ER':
-       '94', 'EY': '21', 'IH': '1', 'IY': '11', 'OW': '62', 'OY': '61', 'UH': '7', 'UW': '72'}
+A2P = {'AA': '5', 'AE': '3', 'AH': '6', 'AO': '53', 'AW': '42', 'AY': '41', 
+       'EH': '2', 'ER': '94', 'EY': '21', 'IH': '1', 'IY': '11', 'OW': '62', 
+       'OY': '61', 'UH': '7', 'UW': '72'}
 A2P_FINAL = {'IY': '12', 'EY': '22', 'OW': '63'}
-A2P_R = {'EH': '2', 'AE': '3', 'IH': '14', 'IY': '14', 'EY': '24', 'AA': '44', 'AO':
-         '64', 'OW': '64', 'UH': '74', 'UW': '74', 'AH': '6', 'AW': '42', 'AY': '41', 'OY': '61'}
+A2P_R = {'EH': '2', 'AE': '3', 'IH': '14', 'IY': '14', 'EY': '24', 'AA': '44',
+         'AO': '64', 'OW': '64', 'UH': '74', 'UW': '74', 'AH': '6', 'AW': '42',
+         'AY': '41', 'OY': '61'}
 # CMU phoneset (distinctive features) to Plotnik coding
 MANNER = {'s': '1', 'a': '2', 'f': '3', 'n': '4', 'l': '5', 'r': '6'}
 PLACE = {'l': '1', 'a': '4', 'p': '5', 'b': '2', 'd': '3', 'v': '6'}
@@ -56,18 +64,17 @@ VOICE = {'-': '1', '+': '2'}
 STYLES = {"R": "2", "N": "1", "L": "2", "G": "1", "S": "2", "K":
           "1", "T": "1", "C": "2", "WL": "6", "MP": "7", "RP": "5", "SD": "4"}
 # Plotnik vowel classes (in the order that they appear in the Plotnik side bar)
-PLOTNIKCODES = [
-    '1', '2', '3', '5', '6', '7', '8', '11', '12', '21', '22', '41', '47', '61', '82',
-    '72', '73', '62', '63', '42', '33', '43', '53', '14', '24', '44', '54', '64', '74', '94', '31', '39']
+PLOTNIKCODES = ['1', '2', '3', '5', '6', '7', '8', '11', '12', '21', '22', 
+                '41', '47', '61', '82', '72', '73', '62', '63', '42', '33', 
+                '43', '53', '14', '24', '44', '54', '64', '74', '94', '31', '39']
 
 # ARPABET phonesets
-CONSONANTS = ['B', 'CH', 'D', 'DH', 'F', 'G', 'HH', 'JH', 'K', 'L', 'M',
-              'N', 'NG', 'P', 'R', 'S', 'SH', 'T', 'TH', 'V', 'W', 'Y', 'Z', 'ZH']
+CONSONANTS = ['B', 'CH', 'D', 'DH', 'F', 'G', 'HH', 'JH', 'K', 'L', 'M', 'N', 
+              'NG', 'P', 'R', 'S', 'SH', 'T', 'TH', 'V', 'W', 'Y', 'Z', 'ZH']
 VOWELS = ['AA', 'AE', 'AH', 'AO', 'AW', 'AY', 'EH',
           'ER', 'EY', 'IH', 'IY', 'OW', 'OY', 'UH', 'UW']
 SPECIAL = ['BR', 'CG', 'LS', 'LG', 'NS']
 
-#
 
 
 class PltFile:
@@ -141,10 +148,15 @@ def arpabet2plotnik(ac, trans, prec_p, foll_p, phoneset, fm, fp, fv, ps, fs):
     elif foll_p != '' and ac == 'AY' and phoneset[foll_p].cvox == '-':
         pc = '47'
     # ingliding ah:
-    elif ac == 'AA' and trans in ['FATHER', 'FATHER', "FATHER'S", 'MA', "MA'S", 'PA', "PA'S", 'SPA', 'SPAS', "SPA'S",
-                                  'CHICAGO', "CHICAGO'S", 'PASTA', 'BRA', 'BRAS', "BRA'S", 'UTAH', 'TACO', 'TACOS', "TACO'S",
-                                  'GRANDFATHER', 'GRANDFATHERS', "GRANDFATHER'S", 'CALM', 'CALMER', 'CALMEST', 'CALMING', 'CALMED', 'CALMS',
-                                  'PALM', 'PALMS', 'BALM', 'BALMS', 'ALMOND', 'ALMONDS', 'LAGER', 'SALAMI', 'NIRVANA', 'KARATE', 'AH']:
+    elif ac == 'AA' and trans in ['FATHER', 'FATHER', "FATHER'S", 'MA', "MA'S",
+                                  'PA', "PA'S", 'SPA', 'SPAS', "SPA'S",
+                                  'CHICAGO', "CHICAGO'S", 'PASTA', 'BRA', 
+                                  'BRAS', "BRA'S", 'UTAH', 'TACO', 'TACOS', 
+                                  "TACO'S", 'GRANDFATHER', 'GRANDFATHERS', 
+                                  "GRANDFATHER'S", 'CALM', 'CALMER', 'CALMEST', 
+                                  'CALMING', 'CALMED', 'CALMS', 'PALM', 'PALMS',
+                                  'BALM', 'BALMS', 'ALMOND', 'ALMONDS', 'LAGER',
+                                  'SALAMI', 'NIRVANA', 'KARATE', 'AH']:
         pc = '43'
     # uw after coronal onsets -> Tuw:
     elif prec_p != '' and ac == 'UW' and phoneset[prec_p].cplace == 'a':
@@ -161,7 +173,8 @@ def arpabet2plotnik(ac, trans, prec_p, foll_p, phoneset, fm, fp, fv, ps, fs):
 
 
 def cmu2plotnik_code(i, phones, trans, phoneset, speaker, vowelSystem):
-    """uses `arpabet2plotnik` to convert Arpabet vowel transcription to Plotnik code; appends Plotnik environmental codes (.xxxxx)"""
+    """uses `arpabet2plotnik` to convert Arpabet vowel transcription to Plotnik
+    code; appends Plotnik environmental codes (.xxxxx)"""
     # i = index of vowel in token
     # phones = list of phones in whole token
     # trans = transcription (label) of token
@@ -235,7 +248,9 @@ def cmu2plotnik_code(i, phones, trans, phoneset, speaker, vowelSystem):
             ps = '5'  # palatal
         elif prec_p in ['G', 'K']:
             ps = '6'  # velar
-        elif i > 1 and prec_p in ['L', 'R'] and phones[i - 2].label in ['B', 'D', 'G', 'P', 'T', 'K', 'V', 'F', 'Z', 'S', 'SH', 'TH']:
+        elif (i > 1 and prec_p in ['L', 'R'] and 
+                phones[i - 2].label in ['B', 'D', 'G', 'P', 'T', 'K', 'V', 'F',
+                                        'Z', 'S', 'SH', 'TH']):
             ps = '8'  # obstruent + liquid
         elif prec_p in ['L', 'R', 'ER']:
             ps = '7'  # liquid
@@ -272,7 +287,8 @@ def convertDur(dur):
 
 
 def convertStress(stress):
-    """converts labeling of unstressed vowels from '0' in the CMU Pronouncing Dictionary to '3' in Plotnik"""
+    """converts labeling of unstressed vowels from '0' in the CMU Pronouncing 
+    Dictionary to '3' in Plotnik"""
     if stress == '0':
         stress = '3'
     return stress
@@ -467,7 +483,8 @@ def outputPlotnikFile(Plt, f):
             fw.write(' /' + str(vm.nFormants) + '/')
                      # nFormants (if Mahalanobis method)
         fw.write(' ' + str(vm.t) + ' ')  # measurement point
-# fw.write('+' + ','.join([str(p) for p in vm.poles]) + '+')        ## list of original poles as returned from LPC analysis (at point of measurement)
+# fw.write('+' + ','.join([str(p) for p in vm.poles]) + '+')        
+## list of original poles as returned from LPC analysis (at point of measurement)
 # fw.write('+' + ','.join([str(b) for b in vm.bandwidths]) + '+')   ##
 # list of original bandwidths as returned from LPC analysis (at point of
 # measurement)
@@ -577,18 +594,27 @@ def phila_system(i, phones, trans, fm, fp, fv, ps, fs, pc, phoneset):
 
     # 3. /oh/
     if phones[
-        i].arpa == 'AA' and trans.upper() in ['LAW', 'LAWS', "LAW'S", 'LAWFUL', 'UNLAWFUL', 'DOG', 'DOGS', "DOG'S", 'DOGGED',
-                                              'ALL', "ALL'S", 'CALL', 'CALLS', "CALL'S", 'CALLING', 'CALLED', 'FALL', 'FALLS', "FALL'S", 'FALLING'
-                                              'AUDIENCE', 'AUDIENCES', "AUDIENCE'S", 'ON', 'ONTO', 'GONNA', 'GONE', 'BOSTON', "BOSTON'S",
-                                              'AWFUL', 'AWFULLY', 'AWFULNESS', 'AWKWARD', 'AWKWARDLY', 'AWKWARDNESS', 'AWESOME', 'AUGUST',
+        i].arpa == 'AA' and trans.upper() in ['LAW', 'LAWS', "LAW'S", 'LAWFUL',
+                                              'UNLAWFUL', 'DOG', 'DOGS', "DOG'S",
+                                              'DOGGED', 'ALL', "ALL'S", 'CALL', 
+                                              'CALLS', "CALL'S", 'CALLING', 
+                                              'CALLED', 'FALL', 'FALLS', "FALL'S", 
+                                              'FALLING', 'AUDIENCE', 'AUDIENCES', 
+                                              "AUDIENCE'S", 'ON', 'ONTO', 'GONNA', 
+                                              'GONE', 'BOSTON', "BOSTON'S", 'AWFUL', 
+                                              'AWFULLY', 'AWFULNESS', 'AWKWARD', 
+                                              'AWKWARDLY', 'AWKWARDNESS', 'AWESOME', 'AUGUST',
                                               'COUGH', 'COUGHS', 'COUGHED', 'COUGHING']:
         pc = '53'
 
     # 4. /o/
     if phones[
-        i].arpa == 'AO' and trans.upper() in ['CHOCOLATE', 'CHOCOLATES', "CHOCOLATE'S", 'WALLET', 'WALLETS', 'WARRANT', 'WARRANTS',
-                                              'WATCH', 'WATCHES', 'WATCHED', 'WATCHING', 'WANDER', 'WANDERS', 'WANDERED', 'WANDERING',
-                                              'CONNIE', 'CATHOLICISM', 'WANT', 'WANTED', 'PONG', 'GONG', 'KONG', 'FLORIDA', 'ORANGE',
+        i].arpa == 'AO' and trans.upper() in ['CHOCOLATE', 'CHOCOLATES', "CHOCOLATE'S", 
+                                              'WALLET', 'WALLETS', 'WARRANT', 'WARRANTS',
+                                              'WATCH', 'WATCHES', 'WATCHED', 'WATCHING', 
+                                              'WANDER', 'WANDERS', 'WANDERED', 'WANDERING',
+                                              'CONNIE', 'CATHOLICISM', 'WANT', 'WANTED', 
+                                              'PONG', 'GONG', 'KONG', 'FLORIDA', 'ORANGE',
                                               'HORRIBLE', 'MAJORITY']:
         pc = '5'
 
@@ -615,7 +641,8 @@ def phila_system(i, phones, trans, fm, fp, fv, ps, fs, pc, phoneset):
         # words spelled with "-u" after /t/, /d/, /n/, /l/, /s/, e.g.
         # "Tuesday", "nude", "duty", "new"
         if i > 0 and phones[i - 1].arpa in ['T', 'D', 'N', 'L', 'S']:
-            for t in ['TU', 'DU', 'NU', 'LU', 'SU']:  # make sure -u spelling is adjacent to consonant in orthography
+            for t in ['TU', 'DU', 'NU', 'LU', 'SU']:  
+            # make sure -u spelling is adjacent to consonant in orthography
                 if t in trans.upper():
                     pc = '82'
 
@@ -632,14 +659,16 @@ def phila_system(i, phones, trans, fm, fp, fv, ps, fs, pc, phoneset):
     if len(phones) > i + 1 and phones[i].arpa in ['EH', 'AE'] and phones[i + 1].arpa == 'R':
         if len(phones) == i + 2:  # word-final /r/
             pc = '24'
-        if len(phones) > i + 2 and phoneset[phones[i + 2].arpa].cvox != '0':  # not word-final but also NOT intervocalic r
+        if len(phones) > i + 2 and phoneset[phones[i + 2].arpa].cvox != '0':  
+        # not word-final but also NOT intervocalic r
             pc = '24'
 
     return pc
 
 
 def process_measurement_line(line):
-    """splits Plotnik measurement line into values for formants, vowel class, stress, token, glide, style, and comment"""
+    """splits Plotnik measurement line into values for formants, vowel class, 
+    stress, token, glide, style, and comment"""
     vm = VowelMeasurement()
     vm.F1 = float(line.split(',')[0])  # first formant
     vm.F2 = float(line.split(',')[1])  # second formant
@@ -651,8 +680,8 @@ def process_measurement_line(line):
         3]  # Plotnik vowel code (includes phonetic environment):  "xx.xxxxx"
     vm.stress = line.split(',')[4]  # stress (and duration:  "x.xxx"???)
     vm.text = line.split(',')[5]  # rest of line (word, glide, style, comment)
-                                          # if TIME STAMP was included in file, it would be in field 6!
-                                          # -> check number of fields returned from split(',')!
+                                  # if TIME STAMP was included in file, it would be in field 6!
+                                  # -> check number of fields returned from split(',')!
     # process text
     vm.word = vm.text.split()[0]  # token (with parentheses and count)
     vm.trans = word2trans(vm.word)
