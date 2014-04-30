@@ -858,12 +858,15 @@ def readPNCdata(speakername, speakernum, fileStem):
     #        exit('Malformed argument: "' + fname + '"' + ' regex match failed.')
     #subject = m.group(0)
 
-    subject = match(IHPSUBJECT, path.split(fileStem)[1]).group(0)
-    if subject == None:
-            try:
-                subject = match(PNCSUBJECT, path.split(fileStem)[1]).group(0)
-            except AttributeError:
-                exit('Unrecognized filename: "' + fname + '"' + ' regex subject match failed.')
+    try:
+        subject = match(IHPSUBJECT, path.split(fileStem)[1]).group(0)
+    except:
+        try:            
+            m = match(PNCSUBJECT, path.split(fileStem)[1]).group(0)
+        except:
+            #exit('Unrecognized filename: "' + fname + '"' + ' regex subject match failed.')
+            subject = fileStem
+            print fileStem
 
     with open(datafile, 'rU') as source:
         for row in DictReader(source):
