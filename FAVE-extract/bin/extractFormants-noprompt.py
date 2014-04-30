@@ -884,7 +884,7 @@ def readPNCdata(speakername, speakernum, fileStem):
             speaker.sex = PNC_dict[subject]['Sex']
             speaker.age = PNC_dict[subject]['Age']
             speaker.ethnicity = PNC_dict[subject]['Ethnicity']
-            speaker.location = PNC_dict[subject]['Nbrhood']
+            speaker.location = PNC_dict[subject]['Location']
             speaker.year = PNC_dict[subject]['Year']
             speaker.years_of_schooling = PNC_dict[subject]['YearsOfSchool']
             speaker.tiernum = speakernum * \
