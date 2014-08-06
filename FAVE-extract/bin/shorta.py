@@ -21,7 +21,7 @@ POSITIVE_EXCEPTIONS = {'BAD', 'BADLY', 'BADDER', 'BADDEST', 'BADNESS',
                        "GRANDMOTHER'S", 'GRANDMA', 'SANTA', 'SANTAS', "SANTA'S",
                        'BASKET', 'BASKETS', 'BASKETRY', "BASKET'S",
                        'BASKETMAKER', 'BASKETMAKING', 'BASKETBALL', 
-                       'BASKETBALLS', "BASKETBALL'S", 'TASKER'}
+                       'BASKETBALLS', "BASKETBALL'S", 'TASKER', 'BATHROOM'}
 UNCLASSIFIABLE = {'CAN', 'BEGAN', 'ANNE', 'ANNIE'}
 
 
@@ -39,7 +39,7 @@ def is_penultimate_syllable_resyllabified(word):
     # define the suffix to be the residue
     suffix = word[sp + 1:].upper()
     # check for /-z/, /-iŋ/, or /-iŋ-z/ therein
-    if suffix and suffix.endswith(('ES', 'ING', 'INGS')):
+    if suffix and suffix.endswith(('ES', 'ING', 'INGS', "IN'")):
         return True
     return False
 
