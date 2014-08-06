@@ -78,6 +78,7 @@ import esps
 import plotnik
 import cmu
 #import vowel
+import subprocess
 
 import numpy as np
 
@@ -1538,35 +1539,43 @@ def outputMeasurements(outputFormat, measurements, m_means, speaker, outputFile,
             fw.write(
                 '\t'.join([vm.phone, str(vm.stress), vm.word, str(vm.f1)]))
                      # vowel (ARPABET coding), stress, word, F1
+
             fw.write('\t')
             if vm.f2:
                 fw.write(str(vm.f2))  # F2 (if present)
+
             fw.write('\t')
             if vm.f3:
                 fw.write(str(vm.f3))  # F3 (if present)
+
             fw.write('\t')
             fw.write(str(vm.b1))  # B1
+
             fw.write('\t')
             if vm.b2:
                 fw.write(str(vm.b2))  # B2
+
             fw.write('\t')
             if vm.b3:
                 fw.write(str(vm.b3))  # B3 (if present)
+
             fw.write('\t')
             fw.write(
                 '\t'.join([str(vm.t), str(vm.beg), str(vm.end), str(vm.dur), vm.cd, vm.fm, vm.fp, vm.fv, vm.ps, vm.fs, vm.style, vm.glide]))
+
             fw.write('\t')
                      # time of measurement, beginning and end of phone,
                      # duration, Plotnik environment codes, style coding, glide
                      # coding
             fw.write(
                 '\t'.join([str(round(t, 1)) if t else '' for t in vm.tracks]))  # formant tracks
-            fw.write('\t')
+
             if vm.nFormants:
+                fw.write('\t')
                 fw.write(str(vm.nFormants))
                          # nFormants selected (if Mahalanobis method)
-                fw.write('\t')
             if candidates:
+                fw.write('\t')
                 fw.write(
                     '\t'.join([','.join([str(p) for p in vm.poles]), ','.join([str(b) for b in vm.bandwidths])]))
                          # candidate poles and bandwidths (at point of
@@ -1714,9 +1723,9 @@ def predictF1F2(phone, selectedpoles, selectedbandwidths, means, covs):
                     # (if F3 and bandwidth measurements exist, add to list of appended values)
                     if len(poles) > 2:
                         values.append(
-                            [x[0], x[1], x[2], x[3], poles[2], bandwidths[2]])
+                            [poles[i], poles[j], bandwidths[i], bandwidths[j], poles[2], bandwidths[2]])
                     else:
-                        values.append([x[0], x[1], x[2], x[3], '', ''])
+                        values.append([poles[i], poles[j], bandwidths[i], bandwidths[j], '', ''])
                     # append corresponding Mahalanobis distance to list of
                     # distances
                     distances.append(dist)
@@ -1739,11 +1748,11 @@ def predictF1F2(phone, selectedpoles, selectedbandwidths, means, covs):
     # if there is a "gap" in the wave form at the point of measurement, the bandwidths returned will be empty,
     # and the following will cause an error...
     if values[winnerIndex][2]:
-        b1 = math.exp(values[winnerIndex][2])
+        b1 = values[winnerIndex][2]
     else:
         b1 = ''
     if values[winnerIndex][3]:
-        b2 = math.exp(values[winnerIndex][3])
+        b2 = values[winnerIndex][3]
     else:
         b2 = ''
     if values[winnerIndex][5]:
@@ -1930,7 +1939,23 @@ def writeLog(filename, wavFile, maxTime, meansFile, covsFile, stopWords):
 
     f = open(filename, 'w')
     f.write(time.asctime())
-    f.write("\n\n")
+    f.write("\n")
+    try:
+        check_version = subprocess.Popen(["git","describe"], stdout = subprocess.PIPE)
+        version,err = check_version.communicate()
+        version = version.rstrip()
+    except OSError:
+        version = None
+
+    if version:
+        f.write("version info from Git: %s"%version)
+        f.write("\n")
+    else:
+        f.write("Not using Git version control. Version info unavailable.\n")
+        f.write("Consider installing Git (http://git-scm.com/).\
+         and cloning this repository from GitHub with: \n \
+         git clone git@github.com:JoFrhwld/FAVE.git")
+        f.write("\n")
     f.write("extractFormants statistics for file %s:\n\n" %
             os.path.basename(wavFile))
     f.write("Total number of vowels (initially):\t%i\n" % count_vowels)

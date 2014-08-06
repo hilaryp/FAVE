@@ -1,7 +1,0 @@
-outputFormat=both
-speechSoftware=Praat
-formantPredictionMethod=mahalanobis
-measurementPointMethod=faav
-nSmoothing=12
-remeasurement=T
-vowelSystem=phila

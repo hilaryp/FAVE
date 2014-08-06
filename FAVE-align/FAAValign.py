@@ -77,6 +77,7 @@ import subprocess
 import traceback
 import codecs
 import mimetypes
+import subprocess
 
 truncated = re.compile(r'\w+\-$')                       ## truncated words
 intended = re.compile(r'^\+\w+')                        ## intended word (inserted by transcribers after truncated word)
@@ -395,17 +396,17 @@ def check_dictionary_entries(lines, wavfile):
                 newwords.append(w)
         newlines.append(newwords)
 
-    ## write new version of the CMU dictionary to file
-    ## (do this here so that new entries to dictionary will still be saved if "check transcription" option is selected
-    ## in addition to the "import transcriptions" option)
-    #write_dict(options.dict)
-    ## NOTE:  dict will no longer be re-written to file as people might upload all kinds of junk
-    ##        Uploaded additional transcriptions will be written to a separate file instead (in add_dictionary_entries), 
-    ##        to be checked manually and merged with the main dictionary at certain intervals
-
+    # write new version of the CMU dictionary to file
+    # (do this here so that new entries to dictionary will still be saved if 
+    # "check transcription" option is selected in addition to the "import 
+    # transcriptions" option)
+        # The following two lines reverse the previous decision to disallow
+        # writing to the local dictionary for the website installation:
+    global options  
+    # need to make options global because dict setting must be changed
+    write_dict(options.dict)
         
     ## write temporary version of the CMU dict to file for use in alignment
-    global options  ## need to make options global because dict setting must be changed
     if not options.check:
         global temp_dict
         temp_dict = os.path.join(os.path.dirname(wavfile), '_'.join(os.path.basename(wavfile).split('_')[:2]) + "_" + "dict")
@@ -1355,6 +1356,33 @@ def write_log(filename, wavfile, duration):
     f.write(t_stamp)
     f.write("\n\n")
     f.write("Alignment statistics for file %s:\n\n" % os.path.basename(wavfile))
+    try:
+        check_version = subprocess.Popen(["git","describe"], stdout = subprocess.PIPE)
+        version,err = check_version.communicate()
+        version = version.rstrip()
+    except OSError:
+        version = None
+
+    if version:
+        f.write("version info from Git: %s"%version)
+        f.write("\n")
+    else:
+        f.write("Not using Git version control. Version info unavailable.\n")
+        f.write("Consider installing Git (http://git-scm.com/).\
+         and cloning this repository from GitHub with: \n \
+         git clone git@github.com:JoFrhwld/FAVE.git")
+        f.write("\n")
+
+    try:
+        check_changes = subprocess.Popen(["git", "diff", "--stat"], stdout = subprocess.PIPE)
+        changes, err = check_changes.communicate()
+    except OSError:
+        changes = None
+
+    if changes:
+        f.write("Uncommitted changes when run:\n")
+        f.write(changes)
+            
     f.write("Total number of words:\t\t\t%i\n" % count_words)
     f.write("Uncertain transcriptions:\t\t%i\t(%.1f%%)\n" % (count_uncertain, float(count_uncertain)/float(count_words)*100))
     f.write("Unclear passages:\t\t\t%i\t(%.1f%%)\n" % (count_unclear, float(count_unclear)/float(count_words)*100))
