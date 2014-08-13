@@ -139,6 +139,8 @@ def is_tense(word, pron):
     True
     >>> is_tense('ASKING', pron['ASKING'])
     True
+    >>> is_tense("PASSIN'", pron["PASSIN'"]) # Did we catch -in' transcriptions?
+    True
 
     (lexically) Unclassifiable:
     >>> is_tense('CAN', pron['CAN'])
@@ -170,6 +172,8 @@ def is_tense(word, pron):
  
     not handled yet: schwa-apocope (e.g., CAMERA), SANTA (when /t/ deleted)
     """
+    if word.endswith("IN'"):
+        word = word[:-1] + 'G'
     # check lexical exceptions
     if word in UNCLASSIFIABLE:
         return None
@@ -177,7 +181,7 @@ def is_tense(word, pron):
         return True
     if word in NEGATIVE_EXCEPTIONS:
         return False    
-    # parse syllables, with "Alaska rule" off
+    # parse syllables, with "Alaska rule" ON 
     syls = syllabify(pron)
     (onset, nucleus, coda) = syls[0]
     # in my syllable-parsing scheme, 'r' is parsed into the nucleus in 
@@ -185,18 +189,6 @@ def is_tense(word, pron):
     # coda's contents
     if len(nucleus) > 1 and nucleus[1] == 'R':
         return False
-    # code potential "Alaska rule" problems as UNCLASSIFIABLE if they
-    # are not positive or negative exceptions already
-    if len(syls) > 1:
-        # true if there is a following syllable
-        next_onset = syls[1][0]
-        if len(syls[0][2]) == 0 and len(next_onset) > 1:
-            # coda is empty, onset is complex...may be a target of the Alaska rule
-            if next_onset[0] == 'S': 
-                if is_penultimate_syllable_resyllabified(word):
-                    # apparent instance of Alaska rule actually due to resyllab
-                    return True
-                return None
     # check for tautosyllabic tensing segment at the start of the coda
     if len(coda) > 0:
         if coda[0] in TENSERS:
