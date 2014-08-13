@@ -175,6 +175,16 @@ def is_tense(word, pron):
     True
  
     not handled yet: schwa-apocope (e.g., CAMERA), SANTA (when /t/ deleted)
+
+    Now, some tests of the old coding system (Labov et al. 2013):
+
+    >>> from plotnik_old import phila_system
+    >>> def is_tense_old(...):
+    ... 
+    >>> 
+
+    >>> 
+    
     """
     # check lexical exceptions
     if word in UNCLASSIFIABLE:
