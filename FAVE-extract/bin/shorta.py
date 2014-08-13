@@ -2,27 +2,22 @@
 # encoding: UTF-8
 
 from syllabify import syllabify
+from stem import stem_infl as STEM
 
-# initialize stemmer
-from decorators import Memoize
-from porter import PorterStemmer
-STEM = Memoize(PorterStemmer().stem)
-
-
-TENSERS = {'M', 'N', 'S', 'TH', 'F'}
-NEGATIVE_EXCEPTIONS = {'AM', 'RAN', 'SWAM', 'MATH', 'EXAM', 'ALAS', 'FAMILY',
+TENSERS = frozenset(['M', 'N', 'S', 'TH', 'F'])
+NEGATIVE_EXCEPTIONS = frozenset(['AM', 'RAN', 'SWAM', 'MATH', 'EXAM', 'ALAS', 'FAMILY',
                        'FAMILIES', "FAMILY'S", 'CATHOLIC', 'CATHOLICS',
-                       'CAMERA', 'CATHERINE'}
-POSITIVE_EXCEPTIONS = {'BAD', 'BADLY', 'BADDER', 'BADDEST', 'BADNESS', 
+                       'CAMERA', 'CATHERINE', "CATHERINE'S", 'ASPECT', 'ASPECTS', 
+                       'ASPIRIN', 'ASPIRINS', 'FANTASTIC', 'RASCAL', 'RASCALS'])
+POSITIVE_EXCEPTIONS = frozenset(['BAD', 'BADLY', 'BADDER', 'BADDEST', 'BADNESS', 
                        'BADMINTON', 'BADMINTONS', 'MAD', 'MADLY', 'MADDEN', 
                        'MADDENING', 'MADDENINGLY', 'MADDER', 'MADNESS', 'GLAD',
                        'GLADLY', 'GLADDER', 'GLADDEST', 'GLADDEN', 
                        'GLADDENING', 'GLADNESS', 'GRANDMOTHER', 'GRANDMOTHERS',
                        "GRANDMOTHER'S", 'GRANDMA', 'SANTA', 'SANTAS', "SANTA'S",
-                       'BASKET', 'BASKETS', 'BASKETRY', "BASKET'S",
-                       'BASKETMAKER', 'BASKETMAKING', 'BASKETBALL', 
-                       'BASKETBALLS', "BASKETBALL'S", 'TASKER', 'BATHROOM'}
-UNCLASSIFIABLE = {'CAN', 'BEGAN', 'ANNE', 'ANNIE'}
+                       'BATHROOM'])
+# TASKER candidate for pos exception, but should be ok with stemming changes
+UNCLASSIFIABLE = frozenset(['CAN', 'BEGAN', 'ANNE', 'ANNIE'])
 
 
 def is_penultimate_syllable_resyllabified(word):
@@ -39,8 +34,7 @@ def is_penultimate_syllable_resyllabified(word):
     # define the suffix to be the residue
     suffix = word[sp + 1:].upper()
     # check for /-z/, /-iŋ/, or /-iŋ-z/ therein
-    # FIXME add -ed, Kyle's planning magick?!?!
-    if suffix and suffix.endswith(('ES', 'ING', 'INGS', "IN'")):
+    if suffix.endswith(("ED", "ES", "ING")):
         return True
     return False
 
@@ -74,10 +68,8 @@ def is_tense(word, pron):
     NB: this does not have appropriate handling for words with multiple
     dictionary entries
 
-    >>> from urllib2 import urlopen
-    >>> DICT = 'http://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict/cmudict.0.7a'
     >>> pron = {}
-    >>> for line in urlopen(DICT):
+    >>> for line in open("dict", "r"):
     ...     if line.startswith(';'):
     ...         continue
     ...     (word, pron_string) = line.rstrip().split('  ', 1)
@@ -130,10 +122,6 @@ def is_tense(word, pron):
     >>> is_tense('CAB', pron['CAB'])
     False
 
-    Tensing blocked in r-colored nuclei:
-    >>> is_tense('BARS', pron['BARS'])
-    False
-
     Open syllables:
     >>> is_tense('HAMMER', pron['HAMMER'])
     False
@@ -157,10 +145,16 @@ def is_tense(word, pron):
     >>> is_tense('BEGAN', pron['BEGAN'])
     >>> is_tense('ANNE', pron['ANNE'])
 
-    Unclassifiable:
+    Formerly unclassifiable sC:
     >>> is_tense('ASPECT', pron['ASPECT'])
+    False
     >>> is_tense('CASKET', pron['CASKET'])
-    >>> is_tense('ASTRO', pron['ASTRO'])
+    True
+    >>> is_tense('ASKED', pron['ASKED'])
+    True
+    >>> is_tense('BASKETBALL', pron['BASKETBALL'])
+    True
+    
 
     Previously incorrectly marked as "unclassifiable":
     >>> is_tense('BANDSTAND', pron['BANDSTAND'])
@@ -175,16 +169,6 @@ def is_tense(word, pron):
     True
  
     not handled yet: schwa-apocope (e.g., CAMERA), SANTA (when /t/ deleted)
-
-    Now, some tests of the old coding system (Labov et al. 2013):
-
-    >>> from plotnik_old import phila_system
-    >>> def is_tense_old(...):
-    ... 
-    >>> 
-
-    >>> 
-    
     """
     # check lexical exceptions
     if word in UNCLASSIFIABLE:
@@ -194,7 +178,7 @@ def is_tense(word, pron):
     if word in NEGATIVE_EXCEPTIONS:
         return False    
     # parse syllables, with "Alaska rule" off
-    syls = syllabify(pron, False)
+    syls = syllabify(pron)
     (onset, nucleus, coda) = syls[0]
     # in my syllable-parsing scheme, 'r' is parsed into the nucleus in 
     # certain contexts; in this case the vowel is lax regardless of the 
@@ -230,4 +214,3 @@ def is_tense(word, pron):
 if __name__ == '__main__':
     import doctest
     doctest.testmod()
-
