@@ -648,8 +648,8 @@ def extractPortion(wavFile, vowelWavFile, beg, end, soundEditor):
     if soundEditor == 'sox':  # this is the default setting, since it's faster
         # force output format because there have been issues with some sound
         # files where Praat could not read the extracted portion
-        os.system(os.path.join(SOXPATH, 'sox') + ' ' + wavFile + ' -t wavpcm ' +
-                  os.path.join(SCRIPTS_HOME, vowelWavFile) + ' trim ' + str(beg) + ' ' + str(end - beg))
+        os.system(os.path.join(SOXPATH, 'sox') + ' ' + '"' + wavFile + '"' + ' -t wavpcm "' +
+                  os.path.join(SCRIPTS_HOME, vowelWavFile) + '" trim ' + str(beg) + ' ' + str(end - beg))
     elif soundEditor == 'praat':
         os.system(os.path.join(PRAATPATH, PRAATNAME) + ' ' + SCRIPTS_HOME + '/extractSegment.praat ' +
                   os.path.join(os.path.pardir, wavFile) + ' ' + vowelWavFile + ' ' + str(beg) + ' ' + str(end))
@@ -853,20 +853,14 @@ def readPNCdata(speakername, speakernum, fileStem):
     IHPSUBJECT = r'^\D\D\D\d-\d\d?\d?'
     PNC_dict = {}
 
-    #m = match(SUBJECT, path.split(fileStem)[1])
-    #if m == None:
-    #        exit('Malformed argument: "' + fname + '"' + ' regex match failed.')
-    #subject = m.group(0)
-
+    # If it's not an IHELP or PNC file, subject defaults to file stem
     try:
         subject = match(IHPSUBJECT, path.split(fileStem)[1]).group(0)
     except:
         try:            
-            m = match(PNCSUBJECT, path.split(fileStem)[1]).group(0)
+            subject  = match(PNCSUBJECT, path.split(fileStem)[1]).group(0)
         except:
-            #exit('Unrecognized filename: "' + fname + '"' + ' regex subject match failed.')
             subject = fileStem
-            print fileStem
 
     with open(datafile, 'rU') as source:
         for row in DictReader(source):
@@ -1809,14 +1803,14 @@ def predictF1F2(phone, selectedpoles, selectedbandwidths, means, covs):
 
 
 def processInput(wavInput, tgInput, output):
-    """for the "multipleFiles" option, processes the three files which contain lists of input filenames,
-    one filename per line; returns list of filenames"""
+    """for the "multipleFiles" option, processes the three files which contain 
+    lists of input filenames, one filename per line; returns list of filenames"""
 
     # remove the trailing newline character from each line of the file, and
     # store the filenames in a list
-    wavFiles = [f.replace('\n', '') for f in open(wavInput, 'r').readlines()]
-    tgFiles = [f.replace('\n', '') for f in open(tgInput, 'r').readlines()]
-    outputFiles = [f.replace('\n', '') for f in open(output, 'r').readlines()]
+    wavFiles = [f.replace('\n', '') for f in open(wavInput, 'rU').readlines()]
+    tgFiles = [f.replace('\n', '') for f in open(tgInput, 'rU').readlines()]
+    outputFiles = [f.replace('\n', '') for f in open(output, 'rU').readlines()]
     return (wavFiles, tgFiles, outputFiles)
 
 
